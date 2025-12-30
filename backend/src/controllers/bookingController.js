@@ -231,13 +231,13 @@ exports.createBooking = async (req, res) => {
 
          const cashCount = await Booking.countDocuments({
              userId,
-             status: { $ne: 'cancelled' },
+             // Removed status exclusion so cancelled bookings are also counted
              $or: [{ paymentMethod: 'cash' }, { paymentMethod: 'CASH' }],
              date: { $gte: monthStart, $lte: monthEnd }
          });
 
          if (cashCount >= maxCash) {
-             return res.status(400).json({ message: `You have reached the limit of ${maxCash} cash bookings per month. Please pay online.` });
+             return res.status(400).json({ message: `You have reached the limit of ${maxCash} cash bookings per month (including cancellations). Please pay online.` });
          }
     }
 
@@ -393,3 +393,32 @@ exports.updateBookingStatus = async (req, res) => {
         res.status(500).json({ message: "Failed to update booking status" });
     }
 }
+
+// --- 6. Get Booking Limits ---
+exports.getBookingLimits = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const config = await SystemConfig.findOne({ key: 'global' });
+        const maxCash = (config && config.maxCashBookingsPerMonth) ? config.maxCashBookingsPerMonth : 5;
+
+        const now = new Date();
+        const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
+        const monthEnd = format(endOfMonth(now), 'yyyy-MM-dd');
+
+        const cashCount = await Booking.countDocuments({
+            userId,
+            // Include cancelled bookings
+            $or: [{ paymentMethod: 'cash' }, { paymentMethod: 'CASH' }],
+            date: { $gte: monthStart, $lte: monthEnd }
+        });
+
+        res.json({
+            limit: maxCash,
+            used: cashCount,
+            remaining: Math.max(0, maxCash - cashCount)
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Failed to fetch booking limits" });
+    }
+};

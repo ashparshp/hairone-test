@@ -17,6 +17,7 @@ export default function PaymentScreen() {
   const [paymentMethod, setPaymentMethod] = useState('Pay at Venue');
   const [loading, setLoading] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(true);
+  const [cashLimit, setCashLimit] = useState<{ limit: number, used: number, remaining: number } | null>(null);
 
   const [config, setConfig] = useState({
       adminCommissionRate: 10,
@@ -33,34 +34,23 @@ export default function PaymentScreen() {
   const finalPrice = originalPrice - discountAmount;
 
   useEffect(() => {
-     fetchConfig();
+     fetchConfigAndLimits();
   }, []);
 
-  const fetchConfig = async () => {
+  const fetchConfigAndLimits = async () => {
       try {
-          // This endpoint is protected by Admin check usually?
-          // Wait, 'getSystemConfig' is in Admin Route.
-          // We need a PUBLIC config endpoint or fetch it via normal means.
-          // Or make the endpoint public/accessible to users.
-          // Let's assume we allow authenticated users to read config for booking purpose.
-          // But wait, user doesn't have access to /api/admin/config.
-          // We need to fix backend permissions or add a public route.
-          // For now, let's try calling it, if it fails, fallback defaults.
-          // Actually, let's modify the Plan to ensure we can read it.
-          // Since I can't modify backend plan easily now, I will optimistically call it.
-          // If it fails (403), I will assume defaults.
+          const [configRes, limitRes] = await Promise.all([
+             api.get('/admin/config').catch(() => null),
+             api.get('/bookings/limits').catch(() => null)
+          ]);
 
-          // BETTER: Create a user-accessible endpoint?
-          // Or just handle the 403 gracefully.
-
-          // Actually, I can use the new Admin Controller endpoint if I allow it.
-          // But it is protected.
-          // Let's try to add a permissive check or just assume for now.
-          // I will use defaults if call fails.
-
-          const res = await api.get('/admin/config').catch(() => null);
-          if (res && res.data) {
-              setConfig(res.data);
+          if (configRes && configRes.data) {
+              setConfig(configRes.data);
+          }
+          if (limitRes && limitRes.data) {
+              setCashLimit(limitRes.data);
+              // If limit reached, switch default to Online if available, or just deselect if not.
+              // We'll handle this in the UI rendering.
           }
       } catch (e) {
           // Defaults apply
@@ -102,7 +92,14 @@ export default function PaymentScreen() {
   };
 
   const methods = [
-    { id: 'Pay at Venue', icon: Banknote, desc: 'Cash or QR at the counter' },
+    {
+        id: 'Pay at Venue',
+        icon: Banknote,
+        desc: cashLimit
+            ? `Cash or QR (${cashLimit.remaining} left)`
+            : 'Cash or QR at the counter',
+        disabled: cashLimit ? cashLimit.remaining <= 0 : false
+    },
   ];
 
   if (config.isPaymentTestMode) {
@@ -130,7 +127,17 @@ export default function PaymentScreen() {
 
       <ScrollView>
         {loadingConfig ? <ActivityIndicator /> : methods.map((m) => (
-          <TouchableOpacity key={m.id} style={[styles.methodCard, {backgroundColor: colors.card, borderColor: colors.border}, paymentMethod === m.id && {borderColor: colors.tint, backgroundColor: theme === 'dark' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)'}]} onPress={() => setPaymentMethod(m.id)}>
+          <TouchableOpacity
+            key={m.id}
+            disabled={m.disabled}
+            style={[
+                styles.methodCard,
+                {backgroundColor: colors.card, borderColor: colors.border},
+                paymentMethod === m.id && {borderColor: colors.tint, backgroundColor: theme === 'dark' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)'},
+                m.disabled && {opacity: 0.5}
+            ]}
+            onPress={() => setPaymentMethod(m.id)}
+          >
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
               <View style={[styles.iconBox, {backgroundColor: theme === 'dark' ? '#1e293b' : '#f1f5f9'}, paymentMethod === m.id && {backgroundColor: colors.tint}]}>
                 <m.icon size={20} color={paymentMethod === m.id ? '#020617' : colors.textMuted} />
@@ -138,6 +145,7 @@ export default function PaymentScreen() {
               <View>
                 <Text style={[styles.methodTitle, {color: colors.text}, paymentMethod === m.id && {color: colors.tint}]}>{m.id}</Text>
                 <Text style={{color: colors.textMuted, fontSize: 12}}>{m.desc}</Text>
+                {m.disabled && <Text style={{color: colors.textMuted, fontSize: 10, marginTop: 2}}>Limit Reached (inc. cancellations)</Text>}
               </View>
             </View>
             {paymentMethod === m.id && <Check size={20} color={colors.tint} />}
