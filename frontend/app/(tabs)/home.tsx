@@ -82,7 +82,8 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchShops();
+      // Pass 'true' to fetch silently without showing full loading state
+      fetchShops(true);
     }, [location, distanceFilter, genderFilter, hasAttemptedLocation])
   );
 
@@ -124,11 +125,11 @@ export default function HomeScreen() {
     }
   };
 
-  const fetchShops = async () => {
+  const fetchShops = async (silent = false) => {
     // Only fetch if we have finished the initial location attempt
     if (!hasAttemptedLocation) return;
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams();
 
@@ -221,13 +222,22 @@ export default function HomeScreen() {
 
       {/* Main Scroll Content */}
       <FlatList
-        data={loading || !hasAttemptedLocation ? [] : shops} // Show empty (triggers skeletons) if loading or locating
+        data={(loading && !refreshing && rawShops.length === 0) || !hasAttemptedLocation ? [] : shops} // Show empty (triggers skeletons) only on initial load
         keyExtractor={(item: any) => item._id}
         renderItem={({ item, index }) => (
           <ShopCard
             shop={item}
             index={index}
-            onPress={() => router.push(`/salon/${item._id}`)}
+            onPress={() => router.push({
+              pathname: `/salon/${item._id}`,
+              params: {
+                name: item.name,
+                address: item.address,
+                image: item.image,
+                rating: item.rating,
+                reviewCount: item.reviewCount || 0
+              }
+            })}
             isFavorite={user?.favorites?.includes(item._id)}
             onToggleFavorite={toggleFavorite}
           />

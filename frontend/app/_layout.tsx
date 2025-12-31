@@ -27,7 +27,7 @@ function AppContent() {
       const timer = setTimeout(async () => {
         await SplashScreen.hideAsync();
         setIsSplashVisible(false);
-      }, 2000); // 2 seconds minimum splash for branding effect
+      }, 500); // Reduced splash time for faster open
       return () => clearTimeout(timer);
     }
   }, [isLoading]);

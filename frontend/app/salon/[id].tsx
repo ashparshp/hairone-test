@@ -11,7 +11,8 @@ import { ChevronLeft, Star, Clock, Check, Calendar, User, Banknote, CreditCard, 
 import { formatLocalDate } from '../../utils/date';
 
 export default function ShopDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const { id, name, address, image, rating, reviewCount } = params;
   const router = useRouter();
   const { user, login, token } = useAuth();
   const { showToast } = useToast();
@@ -20,10 +21,20 @@ export default function ShopDetailsScreen() {
   const bookingContext = useBooking();
   const fetchBookings = bookingContext ? bookingContext.fetchBookings : null;
 
-  const [shop, setShop] = useState<any>(null);
+  // Optimistically initialize shop with passed params if available
+  const [shop, setShop] = useState<any>(name ? {
+    _id: id,
+    name,
+    address,
+    image,
+    rating: Number(rating) || 0,
+    reviewCount: Number(reviewCount) || 0
+  } : null);
+
   const [barbers, setBarbers] = useState<any[]>([]); 
   const [reviews, setReviews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // If we have partial data (name), don't show full page loading spinner
+  const [loading, setLoading] = useState(!name);
   const [config, setConfig] = useState({ userDiscountRate: 0, isPaymentTestMode: false });
 
   // --- WIZARD STATE ---
@@ -102,7 +113,8 @@ export default function ShopDetailsScreen() {
   const fetchShopDetails = async () => {
     try {
       const res = await api.get(`/shops/${id}`);
-      setShop(res.data.shop);
+      // Merge full details with existing partial state to avoid flicker
+      setShop((prev: any) => ({ ...prev, ...res.data.shop }));
       setBarbers(res.data.barbers);
       try {
         const reviewsRes = await getShopReviews(id as string);
