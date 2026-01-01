@@ -40,7 +40,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchShopData = async () => {
+  const fetchShopData = useCallback(async () => {
     // @ts-ignore
     if (!user?.myShopId) {
       setLoading(false);
@@ -57,13 +57,13 @@ export default function DashboardScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user?.myShopId]);
 
   useFocusEffect(
     useCallback(() => {
       refreshUser();
       fetchShopData();
-    }, [])
+    }, [fetchShopData, refreshUser])
   );
 
   const onRefresh = () => {
