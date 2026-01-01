@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/hairone/backend/internal/auth"
-	"github.com/hairone/backend/internal/db"
 	"github.com/hairone/backend/internal/models"
+	"github.com/hairone/backend/internal/types"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthHandler struct {
-	UserRepo *db.UserRepository
+	UserRepo types.UserRepository
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
