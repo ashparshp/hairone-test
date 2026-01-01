@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, isLoading, segments]);
 
   // 3. Login Function (Saves to Storage)
-  const login = async (newToken: string, newUser: any) => {
+  const login = React.useCallback(async (newToken: string, newUser: any) => {
     setToken(newToken);
     setUser(newUser);
     
@@ -87,10 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await SecureStore.setItemAsync('token', newToken);
       await SecureStore.setItemAsync('user', JSON.stringify(newUser));
     }
-  };
+  }, []);
 
   // 4. Logout Function (Clears Storage)
-  const logout = async () => {
+  const logout = React.useCallback(async () => {
     if (Platform.OS === 'web') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -100,14 +100,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setToken(null);
     setUser(null);
-  };
+  }, []);
 
   // Register the logout function with the API interceptor
   useEffect(() => {
     setupAuthInterceptor(logout);
-  }, []);
+  }, [logout]);
 
-  const refreshUser = async () => {
+  const refreshUser = React.useCallback(async () => {
     try {
       const res = await api.get('/auth/me');
       if (res.data) {
@@ -121,10 +121,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.log('Failed to refresh user', e);
     }
-  };
+  }, []);
+
+  const value = React.useMemo(() => ({
+    user, token, isLoading, login, logout, refreshUser
+  }), [user, token, isLoading, login, logout, refreshUser]);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
