@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hairone/backend/internal/db"
 	"github.com/hairone/backend/internal/models"
+	"github.com/hairone/backend/internal/types"
 )
 
 type ShopHandler struct {
-	ShopRepo   *db.ShopRepository
-	BarberRepo *db.BarberRepository
+	ShopRepo   types.ShopRepository
+	BarberRepo types.BarberRepository
 }
 
 func (h *ShopHandler) CreateShop(w http.ResponseWriter, r *http.Request) {

@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hairone/backend/internal/db"
 	"github.com/hairone/backend/internal/models"
+	"github.com/hairone/backend/internal/types"
 )
 
 type BookingHandler struct {
-	BookingRepo *db.BookingRepository
-	ShopRepo    *db.ShopRepository
+	BookingRepo types.BookingRepository
+	ShopRepo    types.ShopRepository
 }
 
 func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
