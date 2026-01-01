@@ -1,0 +1,1 @@
+cmd/bench-server/main.go:9:2: import "github.com/hairone/backend/internal/mocks" is a program, not an importable package
