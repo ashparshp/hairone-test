@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema({
   applicationStatus: { type: String, enum: ['none', 'pending', 'approved', 'rejected', 'suspended'], default: 'none' },
   suspensionReason: { type: String },
   tokenVersion: { type: Number, default: 0 },
+
+  cancellationCount: { type: Number, default: 0 },
+  noShowCount: { type: Number, default: 0 },
+  isFlagged: { type: Boolean, default: false },
+
   createdAt: { type: Date, default: Date.now }
 });
 

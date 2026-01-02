@@ -5,7 +5,8 @@ const systemConfigSchema = new mongoose.Schema({
   adminCommissionRate: { type: Number, default: 10 }, // %
   userDiscountRate: { type: Number, default: 0 }, // %
   isPaymentTestMode: { type: Boolean, default: false },
-  maxCashBookingsPerMonth: { type: Number, default: 5 }
+  maxCashBookingsPerMonth: { type: Number, default: 5 },
+  yearlyCancellationLimit: { type: Number, default: 12 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('SystemConfig', systemConfigSchema);

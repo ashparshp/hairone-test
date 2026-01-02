@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 const initConfig = require("./config/init");
 const { initializeCron } = require("./jobs/settlementJob");
 const { initializeBackupJob } = require("./jobs/backupJob");
+const runAutoCancelJob = require("./jobs/autoCancelJob");
 const mongoose = require("mongoose");
 
 // Security Packages
@@ -20,6 +21,7 @@ connectDB().then(() => {
   initConfig();
   initializeCron(); // Start the scheduler
   initializeBackupJob(); // Start the backup scheduler
+  runAutoCancelJob(); // Start Auto Cancel Job
 });
 
 const app = express();
