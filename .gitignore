@@ -43,3 +43,88 @@ app-example
 /android
 .env
 /frontend/.env
+
+# Gradle build output
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android build intermediates
+app/build/intermediates/
+app/build/outputs/
+app/build/reports/
+app/build/tmp/
+
+# Ignore all intermediate resource folders
+app/build/intermediates/merged_res_blame_folder/
+
+# Ignore all .json, .xml, .jar, .bin, .txt in build/intermediates
+app/build/intermediates/**/*.json
+app/build/intermediates/**/*.xml
+app/build/intermediates/**/*.jar
+app/build/intermediates/**/*.bin
+app/build/intermediates/**/*.txt
+
+# Local configuration
+local.properties
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Log files
+*.log
+
+# Generated files
+app/build/
+app/generated/
+app/intermediates/
+app/kotlin/
+app/outputs/
+app/tmp/
+
+# Misc
+.DS_Store
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Log files
+*.log
+
+# Generated files
+app/build/
+app/generated/
+app/intermediates/
+app/kotlin/
+app/outputs/
+app/tmp/
+.gradle
+
+
+# Misc
+.DS_Store
