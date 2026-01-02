@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const Barber = require('../models/Barber');
 const Shop = require('../models/Shop');
+const User = require('../models/User');
 const SystemConfig = require('../models/SystemConfig');
 const { addMinutes, parse, format, differenceInDays, subDays, startOfMonth, endOfMonth } = require('date-fns');
 const { getISTTime } = require('../utils/dateUtils');
@@ -325,10 +326,38 @@ exports.getMyBookings = async (req, res) => {
 exports.cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findByIdAndUpdate(id, { status: 'cancelled' }, { new: true });
+    const booking = await Booking.findById(id);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    // Cancel the booking
+    booking.status = 'cancelled';
+    await booking.save();
+
+    // Increment cancellation count for User
+    if (booking.userId) {
+        // Fetch Limit dynamically
+        const config = await SystemConfig.findOne({ key: 'global' });
+        const limit = (config && config.yearlyCancellationLimit) ? config.yearlyCancellationLimit : 12;
+
+        const user = await User.findByIdAndUpdate(
+            booking.userId,
+            { $inc: { cancellationCount: 1 } },
+            { new: true }
+        );
+
+        if (user) {
+            // Check limits
+            const totalIncidents = user.cancellationCount + (user.noShowCount || 0);
+            if (totalIncidents > limit && !user.isFlagged) {
+                await User.findByIdAndUpdate(user._id, { isFlagged: true });
+                // We could return a warning here, but we'll just flag silently for now as per plan
+            }
+        }
+    }
+
     res.json(booking);
   } catch (e) {
+    console.error(e);
     res.status(500).json({ message: "Failed to cancel booking" });
   }
 };
