@@ -35,8 +35,9 @@ export default function BookingsScreen() {
   // --- FIX: SAFE CHECK (myBookings || []) ---
   const safeBookings = myBookings || [];
 
+  // Exclude 'missed' from upcoming, Include 'missed' in history
   const upcomingBookings = safeBookings.filter((b: any) => b.status === 'upcoming' || b.status === 'pending');
-  const pastBookings = safeBookings.filter((b: any) => b.status === 'completed' || b.status === 'cancelled');
+  const pastBookings = safeBookings.filter((b: any) => b.status === 'completed' || b.status === 'cancelled' || b.status === 'missed');
   const displayList = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
 
   const openReview = (booking: any) => {
@@ -110,30 +111,19 @@ export default function BookingsScreen() {
     const diffMs = bookingDateTime.getTime() - now.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
 
-    // 1. Check if past
-    if (diffMs < 0) {
-       alert("Cannot Cancel: This appointment time has already passed.");
-       return;
-    }
+    // 1. Check if past (Logic Removed: Users can cancel past bookings if they are still "upcoming",
+    // or they will be auto-moved to "missed" by the backend job. If it's here, let them cancel).
 
     // 2. Prepare Data for Custom Modal
     setSelectedBooking(booking);
     
-    if (diffHours >= 2) {
-        setCancelData({
-            title: "Full Refund",
-            message: "You are cancelling in advance. No cancellation fee applies.",
-            refundAmount: booking.totalPrice || booking.price,
-            isLate: false
-        });
-    } else {
-        setCancelData({
-            title: "Late Cancellation",
-            message: "Cancelling within 2 hours incurs a 50% fee.",
-            refundAmount: (booking.totalPrice || booking.price) / 2,
-            isLate: true
-        });
-    }
+    // Simplified: Always show cancellation confirmation without fee logic for now
+    setCancelData({
+        title: "Cancel Booking",
+        message: "Are you sure you want to cancel this booking? Frequent cancellations may flag your account.",
+        refundAmount: booking.totalPrice || booking.price,
+        isLate: false
+    });
 
     // 3. Show Custom Modal
     setCancelModalVisible(true);
@@ -250,6 +240,10 @@ const handleMap = (lat: number, lng: number, label: string) => {
                     // Brighter red for visibility in dark mode
                     badgeBg = theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)';
                     badgeText = theme === 'dark' ? '#f87171' : '#ef4444'; 
+                } else if (booking.status === 'missed') {
+                    // Gray for missed
+                    badgeBg = theme === 'dark' ? '#334155' : '#e2e8f0';
+                    badgeText = colors.textMuted;
                 }
 
                 return (
