@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator , Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
@@ -63,7 +63,7 @@ export default function ShopDetailsScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  const isSlotValid = (time: string) => {
+  const isSlotValid = useCallback((time: string) => {
     if (!shop) return true;
     const today = new Date();
     const isToday = selectedDate.getDate() === today.getDate() &&
@@ -74,15 +74,16 @@ export default function ShopDetailsScreen() {
     const slotDate = new Date(selectedDate);
     slotDate.setHours(hours, minutes, 0, 0);
     const minNotice = shop.minBookingNotice || 0;
-    const cutoff = new Date(currentTime.getTime() + minNotice * 60000);
+    const buffer = shop.bufferTime || 0;
+    const cutoff = new Date(currentTime.getTime() + (minNotice + buffer) * 60000);
     return slotDate > cutoff;
-  };
+  }, [shop, selectedDate, currentTime]);
 
   useEffect(() => {
     if (selectedTime && !isSlotValid(selectedTime)) {
         setSelectedTime(null);
     }
-  }, [currentTime, selectedTime]);
+  }, [currentTime, selectedTime, isSlotValid]);
 
   useEffect(() => {
     fetchShopDetails();
@@ -104,11 +105,12 @@ export default function ShopDetailsScreen() {
 
   useEffect(() => {
     if (bookingType === 'earliest' && slots.length > 0) {
-        setSelectedTime(slots[0]);
+        const validSlot = slots.find(isSlotValid);
+        setSelectedTime(validSlot || null);
     } else if (bookingType === 'schedule') {
         setSelectedTime(null);
     }
-  }, [slots, bookingType]);
+  }, [slots, bookingType, isSlotValid]);
 
   const fetchShopDetails = async () => {
     try {
@@ -667,16 +669,16 @@ export default function ShopDetailsScreen() {
                 <View style={[styles.earliestCard, {backgroundColor: colors.card, borderColor: colors.tint}]}>
                     {loadingSlots ? (
                          <ActivityIndicator color={colors.tint} />
-                    ) : slots.length > 0 ? (
+                    ) : (slots.find(isSlotValid) ? (
                          <View style={{flexDirection:'row', alignItems:'center', gap: 12}}>
                              <Clock size={24} color={colors.tint} />
                              <View>
-                                 <Text style={{color: colors.text, fontWeight:'bold', fontSize:16}}>Next Available: {slots[0]}</Text>
+                                 <Text style={{color: colors.text, fontWeight:'bold', fontSize:16}}>Next Available: {slots.find(isSlotValid)}</Text>
                              </View>
                          </View>
                     ) : (
                          <Text style={{color: colors.textMuted}}>No slots available today.</Text>
-                    )}
+                    ))}
                 </View>
             ) : (
                 <>
